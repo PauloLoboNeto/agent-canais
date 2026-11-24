@@ -1,0 +1,24 @@
+# Trocar de modelo é só mudar este bloco. Escolha pelo resultado das evals no seu domínio
+# (pass^k, custo e latência), não pelo ranking público.
+# Exemplos: { nome: claude-opus-5-5, provedor: anthropic } ou { nome: gpt-6-astra, provedor: openai }
+modelo:
+  nome: claude-sonnet-5-5
+  provedor: anthropic
+  parametros: {}
+
+gateway:
+  urlBase: https://gateway.exemplo.interno
+  timeoutMs: 10000
+
+limites:
+  # Quantas rodadas de tool a LLM pode fazer dentro de uma etapa, num único turno.
+  passosPorTurno: 6
+
+avaliacao:
+  # Modelo que faz o papel do cliente nas evals. Pode ser diferente do agente.
+  modeloUsuario:
+    nome: claude-sonnet-5-5
+    provedor: anthropic
+    parametros: {}
+  tentativasPorTarefa: 4
+  maxTurnos: 12

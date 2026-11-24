@@ -1,0 +1,54 @@
+produto: fgts
+nomeExibicao: Antecipação do saque-aniversário FGTS
+descricao: >
+  Antecipa parcelas anuais do saque-aniversário do FGTS, sem parcela mensal: o pagamento
+  sai direto do saldo do FGTS. Use quando o cliente falar em FGTS ou saque-aniversário.
+# Este produto usa um fluxo próprio, que estende o padrão com a etapa de autorização.
+fluxo: fgts
+openapi: openapi.yaml
+basePath: /credito/fgts/v1
+canais: [mobile]
+
+cartaoConfirmacao:
+  - { campo: quantidadeParcelas, rotulo: Saques-aniversário antecipados, formato: anos }
+  - { campo: valorLiberado, rotulo: Valor liberado, formato: moeda }
+  - { campo: taxaMensal, rotulo: Taxa de juros, formato: percentualMes }
+  - { campo: cetAnual, rotulo: CET, formato: percentualAno }
+
+operacoes:
+  consultarCondicoes:
+    etapa: oferta
+    efeito: leitura
+    quandoUsar: Para explicar taxa e limite de parcelas antes de qualquer simulação.
+    produz: condicoes
+
+  verificarAutorizacao:
+    etapa: autorizacao
+    efeito: leitura
+    quandoUsar: Ao entrar na etapa e sempre que o cliente disser que já fez a autorização no app do FGTS.
+    doContexto:
+      cpf: sessao.cpf
+    produz: autorizacao
+
+  simularAntecipacao:
+    etapa: simulacao
+    efeito: leitura
+    quandoUsar: Sempre que o cliente escolher ou mudar a quantidade de parcelas anuais a antecipar.
+    quandoNaoUsar: Para estimar valor liberado de cabeça.
+    requer: [autorizacao_fgts_ok]
+    doContexto:
+      cpf: sessao.cpf
+    produz: simulacao
+    exemplos:
+      - descricao: cliente quer antecipar 5 anos
+        argumentos: { quantidadeParcelas: 5 }
+
+  contratarAntecipacao:
+    etapa: efetivacao
+    efeito: escrita
+    quandoUsar: Uma única vez, para contratar a simulação que o cliente confirmou.
+    requer: [autorizacao_fgts_ok, simulacao_valida, confirmacao_do_cliente]
+    doContexto:
+      cpf: sessao.cpf
+      simulacaoId: dados.confirmacao.simulacaoId
+    produz: contrato

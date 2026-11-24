@@ -1,0 +1,71 @@
+openapi: 3.0.3
+info:
+  title: Crédito Pessoal (CDC)
+  version: 1.0.0
+paths:
+  /clientes/{cpf}/limite:
+    get:
+      operationId: consultarLimite
+      summary: Retorna o limite pré-aprovado de crédito pessoal do cliente.
+      parameters:
+        - name: cpf
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^[0-9]{11}$"
+      responses:
+        "200":
+          description: Limite disponível, taxa e prazo máximo.
+  /simulacoes:
+    post:
+      operationId: simularEmprestimo
+      summary: Simula um empréstimo pessoal.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [cpf, valor, prazoMeses, diaVencimento]
+              properties:
+                cpf:
+                  type: string
+                  pattern: "^[0-9]{11}$"
+                valor:
+                  type: number
+                  minimum: 300
+                  description: Valor solicitado, em reais.
+                prazoMeses:
+                  type: integer
+                  minimum: 3
+                  maximum: 48
+                  description: Prazo, em meses.
+                diaVencimento:
+                  type: integer
+                  enum: [5, 10, 15, 20]
+                  description: Dia do mês para vencimento das parcelas.
+      responses:
+        "201":
+          description: Simulação criada.
+        "422":
+          description: Valor ou prazo fora do limite.
+  /contratos:
+    post:
+      operationId: contratarEmprestimo
+      summary: Contrata o empréstimo a partir de uma simulação.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [cpf, simulacaoId]
+              properties:
+                cpf:
+                  type: string
+                simulacaoId:
+                  type: string
+      responses:
+        "201":
+          description: Contrato efetivado.

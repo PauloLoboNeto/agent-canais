@@ -1,0 +1,37 @@
+# Fluxo padrão de contratação. Cada nó é uma etapa (capacidade) e roda a LLM com a skill
+# e as tools daquela etapa. A ordem obrigatória mora aqui, nas transições, e não em skill.
+#
+# Regras de leitura:
+# - Ficar na etapa atual é sempre permitido.
+# - Uma transição só aparece como opção se todas as guardas de `requer` forem verdadeiras.
+# - `automatica: true` faz o runtime seguir a transição sem consultar a LLM assim que as
+#   guardas passam (no início do turno ou logo depois da etapa rodar).
+# - Quando há mais de uma opção válida, a LLM escolhe, mas só entre as opções válidas.
+nome: credito_padrao
+inicio: oferta
+
+nos:
+  oferta:
+    objetivo: Mostrar quanto o cliente tem disponível e entender o que ele quer.
+  simulacao:
+    objetivo: Simular valor e prazo até o cliente decidir.
+  efetivacao:
+    objetivo: Efetivar a simulação que o cliente confirmou.
+  concluido:
+    objetivo: Tirar dúvidas sobre o contrato já efetivado.
+
+transicoes:
+  oferta:
+    - para: simulacao
+  simulacao:
+    - para: oferta
+    - para: efetivacao
+      requer: [simulacao_valida, confirmacao_do_cliente]
+      automatica: true
+  efetivacao:
+    # Se a efetivação falhar, o cliente pode voltar a simular (e terá de confirmar de novo).
+    - para: simulacao
+    - para: concluido
+      requer: [contrato_efetivado]
+      automatica: true
+  concluido: []

@@ -1,0 +1,59 @@
+# O que o time de consignado entrega além do OpenAPI: o complemento escrito para a LLM
+# e as regras que o runtime aplica em código. Nenhuma linha de código por produto.
+produto: consignado
+nomeExibicao: Crédito consignado
+descricao: >
+  Empréstimo com desconto direto na folha de pagamento ou no benefício do INSS.
+  Use quando o cliente falar em consignado, empréstimo descontado em folha ou no benefício.
+fluxo: credito_padrao
+openapi: openapi.yaml
+basePath: /credito/consignado/v1
+canais: [mobile, gerente, operacoes]
+
+# O que o canal mostra no cartão de confirmação. É gerado por código a partir da
+# simulação, nunca escrito pela LLM, para que taxa e CET apareçam sempre e corretos.
+cartaoConfirmacao:
+  - { campo: valor, rotulo: Valor contratado, formato: moeda }
+  - { campo: prazoMeses, rotulo: Prazo, formato: meses }
+  - { campo: parcela, rotulo: Parcela mensal, formato: moeda }
+  - { campo: taxaMensal, rotulo: Taxa de juros, formato: percentualMes }
+  - { campo: cetAnual, rotulo: CET, formato: percentualAno }
+
+operacoes:
+  consultarOfertas:
+    etapa: oferta
+    efeito: leitura
+    quandoUsar: No início do atendimento, para saber quanto o cliente tem disponível e com qual taxa.
+    quandoNaoUsar: Para calcular parcela. Isso é papel da simulação.
+    # Parâmetros que nunca vêm da LLM: o runtime preenche a partir da sessão autenticada.
+    doContexto:
+      cpf: sessao.cpf
+    # O resultado fica guardado no estado da conversa com esta chave.
+    produz: oferta
+
+  simularContrato:
+    etapa: simulacao
+    efeito: leitura
+    quandoUsar: Sempre que o cliente informar ou mudar valor ou prazo. Cada nova simulação substitui a anterior.
+    quandoNaoUsar: Para estimar parcela de cabeça. Nunca informe parcela sem chamar esta operação.
+    doContexto:
+      cpf: sessao.cpf
+    produz: simulacao
+    # Exemplos podem vir da collection do time, sem dados pessoais. São validados
+    # contra o schema quando o catálogo carrega, então um exemplo desatualizado quebra o boot.
+    exemplos:
+      - descricao: cliente pede 10 mil em 48 meses
+        argumentos: { ofertaId: OF-CONS-1, valor: 10000, prazoMeses: 48 }
+
+  efetivarContrato:
+    etapa: efetivacao
+    efeito: escrita
+    quandoUsar: Uma única vez, para efetivar a simulação que o cliente confirmou.
+    quandoNaoUsar: Se o cliente ainda estiver em dúvida ou pedir outra simulação.
+    # Guardas avaliadas em código antes da chamada. Se alguma falhar, a chamada não sai.
+    requer: [simulacao_valida, confirmacao_do_cliente]
+    doContexto:
+      cpf: sessao.cpf
+      # A LLM não escolhe qual simulação efetivar: é sempre a que o cliente confirmou.
+      simulacaoId: dados.confirmacao.simulacaoId
+    produz: contrato

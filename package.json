@@ -1,0 +1,35 @@
+{
+  "name": "agent-canais",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Esboço: agente LLM em LangGraph (TypeScript) guiado por catálogo de APIs, skills por etapa e grafo declarativo com guardas em código.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "chat": "tsx src/cli.ts",
+    "evals": "tsx evals/rodarEvals.ts",
+    "collection": "tsx scripts/collectionParaOpenapi.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@langchain/core": "^1.5.1",
+    "@langchain/langgraph": "^1.7.5",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "langchain": "^1.6.8",
+    "yaml": "^2.9.1"
+  },
+  "optionalDependencies": {
+    "@langchain/anthropic": "^1.6.6",
+    "@langchain/openai": "^1.8.5"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.1"
+  }
+}

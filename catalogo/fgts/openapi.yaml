@@ -1,0 +1,68 @@
+openapi: 3.0.3
+info:
+  title: Antecipação do Saque-Aniversário FGTS
+  version: 1.0.0
+paths:
+  /condicoes:
+    get:
+      operationId: consultarCondicoes
+      summary: Retorna as condições vigentes da antecipação (taxa e quantidade máxima de parcelas anuais).
+      responses:
+        "200":
+          description: Condições vigentes.
+  /clientes/{cpf}/autorizacao:
+    get:
+      operationId: verificarAutorizacao
+      summary: Verifica se o cliente aderiu ao saque-aniversário e autorizou o banco a consultar o saldo.
+      parameters:
+        - name: cpf
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^[0-9]{11}$"
+      responses:
+        "200":
+          description: Situação da autorização (AUTORIZADO ou PENDENTE).
+  /simulacoes:
+    post:
+      operationId: simularAntecipacao
+      summary: Simula a antecipação de uma quantidade de parcelas anuais do saque-aniversário.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [cpf, quantidadeParcelas]
+              properties:
+                cpf:
+                  type: string
+                  pattern: "^[0-9]{11}$"
+                quantidadeParcelas:
+                  type: integer
+                  minimum: 1
+                  maximum: 10
+                  description: Quantos saques-aniversário antecipar (1 a 10 anos).
+      responses:
+        "201":
+          description: Simulação criada.
+  /contratos:
+    post:
+      operationId: contratarAntecipacao
+      summary: Contrata a antecipação a partir de uma simulação.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [cpf, simulacaoId]
+              properties:
+                cpf:
+                  type: string
+                simulacaoId:
+                  type: string
+      responses:
+        "201":
+          description: Contrato efetivado.

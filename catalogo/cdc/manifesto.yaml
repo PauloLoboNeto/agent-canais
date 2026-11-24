@@ -1,0 +1,50 @@
+# Crédito pessoal entra no catálogo sem nenhuma linha de código: usa o fluxo padrão e as
+# skills padrão, e só traz o OpenAPI e este manifesto.
+produto: cdc
+nomeExibicao: Crédito pessoal
+descricao: >
+  Empréstimo pessoal com parcelas mensais em boleto ou débito em conta, sem garantia.
+  Use quando o cliente falar em empréstimo pessoal ou crédito pessoal e não for consignado.
+fluxo: credito_padrao
+openapi: openapi.yaml
+basePath: /credito/cdc/v1
+canais: [mobile, gerente]
+
+cartaoConfirmacao:
+  - { campo: valor, rotulo: Valor contratado, formato: moeda }
+  - { campo: prazoMeses, rotulo: Prazo, formato: meses }
+  - { campo: parcela, rotulo: Parcela mensal, formato: moeda }
+  - { campo: diaVencimento, rotulo: Dia do vencimento, formato: texto }
+  - { campo: taxaMensal, rotulo: Taxa de juros, formato: percentualMes }
+  - { campo: cetAnual, rotulo: CET, formato: percentualAno }
+
+operacoes:
+  consultarLimite:
+    etapa: oferta
+    efeito: leitura
+    quandoUsar: No início do atendimento, para saber o limite, a taxa e o prazo máximo.
+    doContexto:
+      cpf: sessao.cpf
+    produz: oferta
+
+  simularEmprestimo:
+    etapa: simulacao
+    efeito: leitura
+    quandoUsar: Sempre que o cliente informar ou mudar valor, prazo ou dia de vencimento.
+    quandoNaoUsar: Para estimar parcela de cabeça.
+    doContexto:
+      cpf: sessao.cpf
+    produz: simulacao
+    exemplos:
+      - descricao: cliente pede 3 mil em 12 meses com vencimento no dia 10
+        argumentos: { valor: 3000, prazoMeses: 12, diaVencimento: 10 }
+
+  contratarEmprestimo:
+    etapa: efetivacao
+    efeito: escrita
+    quandoUsar: Uma única vez, para contratar a simulação que o cliente confirmou.
+    requer: [simulacao_valida, confirmacao_do_cliente]
+    doContexto:
+      cpf: sessao.cpf
+      simulacaoId: dados.confirmacao.simulacaoId
+    produz: contrato

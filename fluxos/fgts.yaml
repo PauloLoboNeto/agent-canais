@@ -1,0 +1,23 @@
+# O FGTS reaproveita o fluxo padrão e só declara o que muda: uma etapa de autorização
+# entre a oferta e a simulação. As transições declaradas aqui substituem as do fluxo base
+# para a mesma etapa de origem; as demais são herdadas.
+nome: fgts
+estende: credito_padrao
+
+nos:
+  autorizacao:
+    objetivo: Garantir que o cliente autorizou o banco no saque-aniversário.
+
+transicoes:
+  oferta:
+    - para: autorizacao
+  autorizacao:
+    - para: oferta
+    - para: simulacao
+      requer: [autorizacao_fgts_ok]
+      automatica: true
+  simulacao:
+    - para: autorizacao
+    - para: efetivacao
+      requer: [autorizacao_fgts_ok, simulacao_valida, confirmacao_do_cliente]
+      automatica: true

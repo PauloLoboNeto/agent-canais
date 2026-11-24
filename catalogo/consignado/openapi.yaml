@@ -1,0 +1,115 @@
+# Exemplo do spec que o time de consignado já publica no gateway.
+# O runtime lê este arquivo para gerar as tools: nada aqui foi escrito para a LLM.
+openapi: 3.0.3
+info:
+  title: Crédito Consignado
+  version: 1.0.0
+paths:
+  /clientes/{cpf}/ofertas:
+    get:
+      operationId: consultarOfertas
+      summary: Lista as ofertas de consignado pré-aprovadas para o cliente.
+      parameters:
+        - name: cpf
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Cpf"
+      responses:
+        "200":
+          description: Ofertas disponíveis.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ofertas"
+  /simulacoes:
+    post:
+      operationId: simularContrato
+      summary: Simula um contrato de consignado a partir de uma oferta.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PedidoSimulacao"
+      responses:
+        "201":
+          description: Simulação criada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Simulacao"
+        "422":
+          description: Valor ou prazo fora dos limites da oferta.
+  /contratos:
+    post:
+      operationId: efetivarContrato
+      summary: Efetiva o contrato a partir de uma simulação.
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PedidoContrato"
+      responses:
+        "201":
+          description: Contrato efetivado.
+components:
+  schemas:
+    Cpf:
+      type: string
+      pattern: "^[0-9]{11}$"
+    Ofertas:
+      type: object
+      properties:
+        ofertas:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              taxaMensal: { type: number }
+              valorMaximo: { type: number }
+              prazoMaximoMeses: { type: integer }
+    PedidoSimulacao:
+      type: object
+      required: [cpf, ofertaId, valor, prazoMeses]
+      properties:
+        cpf:
+          $ref: "#/components/schemas/Cpf"
+        ofertaId:
+          type: string
+          description: Identificador da oferta retornada por consultarOfertas.
+        valor:
+          type: number
+          minimum: 500
+          description: Valor solicitado, em reais.
+        prazoMeses:
+          type: integer
+          minimum: 6
+          maximum: 96
+          description: Prazo do contrato, em meses.
+    Simulacao:
+      type: object
+      properties:
+        id: { type: string }
+        valor: { type: number }
+        prazoMeses: { type: integer }
+        parcela: { type: number }
+        taxaMensal: { type: number }
+        cetAnual: { type: number }
+        validaAte: { type: string, format: date-time }
+    PedidoContrato:
+      type: object
+      required: [cpf, simulacaoId]
+      properties:
+        cpf:
+          $ref: "#/components/schemas/Cpf"
+        simulacaoId:
+          type: string

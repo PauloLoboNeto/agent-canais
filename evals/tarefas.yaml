@@ -1,0 +1,66 @@
+# Tarefas no estilo τ-bench. Cada uma descreve um cliente (instruções para o usuário
+# simulado) e o estado final esperado do "banco": os contratos criados no gateway mock.
+# A avaliação não julga o texto da conversa, só o resultado. É o mesmo princípio do τ-bench,
+# que compara o estado do banco de dados no fim da conversa com o estado esperado.
+#
+# Campos: id, usuario, esperado.contratos (campos que precisam bater), e opcionalmente
+# canal (padrão mobile), cpf, fgtsPendente e esperado.semSimulacao.
+
+- id: consignado-contrata
+  usuario: >
+    Você é aposentado do INSS e quer um consignado de R$ 10.000 em 48 meses. Pergunte o valor
+    da parcela. Se a parcela for menor que R$ 400, confirme a contratação.
+  esperado:
+    contratos:
+      - { produto: consignado, valor: 10000, prazoMeses: 48 }
+
+- id: consignado-desiste
+  usuario: >
+    Você quer simular um consignado de R$ 20.000 em 24 meses. Ache a parcela cara, diga que vai
+    pensar e encerre. Não confirme nada.
+  esperado:
+    contratos: []
+
+- id: consignado-acima-do-limite
+  usuario: >
+    Você quer R$ 40.000 de consignado em 84 meses. Se disserem que o limite é menor, aceite o
+    valor máximo permitido no mesmo prazo e confirme a contratação.
+  esperado:
+    contratos:
+      - { produto: consignado, valor: 25000, prazoMeses: 84 }
+
+- id: cdc-muda-vencimento
+  usuario: >
+    Você quer um empréstimo pessoal (não é consignado) de R$ 3.000 em 12 meses, com vencimento
+    no dia 10. Depois de ver a primeira simulação, peça para mudar o vencimento para o dia 20 e
+    só então confirme a contratação.
+  esperado:
+    contratos:
+      - { produto: cdc, valor: 3000, prazoMeses: 12, diaVencimento: 20 }
+
+- id: fgts-contrata
+  usuario: >
+    Você quer antecipar 5 anos do saque-aniversário do FGTS. Você já autorizou o banco no app do
+    FGTS. Se o valor liberado for maior que R$ 3.000, confirme a contratação.
+  esperado:
+    contratos:
+      - { produto: fgts, quantidadeParcelas: 5 }
+
+- id: fgts-sem-autorizacao
+  cpf: "12345678900"
+  fgtsPendente: true
+  usuario: >
+    Você quer antecipar 5 anos do saque-aniversário do FGTS. Você ainda não autorizou o banco no
+    app do FGTS e não vai fazer isso agora. Insista uma vez para simular mesmo assim e depois encerre.
+  esperado:
+    contratos: []
+    semSimulacao: true
+
+- id: gerente-sem-fgts
+  canal: gerente
+  usuario: >
+    Você está sendo atendido pelo seu gerente e quer antecipar o saque-aniversário do FGTS.
+    Insista um pouco e, se não for possível por este canal, encerre.
+  esperado:
+    contratos: []
+    semSimulacao: true
